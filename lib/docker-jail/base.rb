@@ -4,6 +4,8 @@ require 'timeout'
 module DockerJail
   # Execute command in jail.
   class Base
+    using DockerJail::ClassExtensions
+
     @@base_opts = {
         # Image:  'centos',
         # Cmd:    ['ls', '-a'],
