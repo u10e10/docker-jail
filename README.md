@@ -1,41 +1,109 @@
-# Docker::Jail
+# DockerJail
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/docker/jail`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+It's easy to make a jail with Docker.  
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'docker-jail'
+```bash
+gem install docker-jail
 ```
 
-And then execute:
+## Documents
 
-    $ bundle
+This gem is documented by YARD.  
 
-Or install it yourself as:
+```bash
+yard server --gems
+```
 
-    $ gem install docker-jail
+### See
+[Docker Engine API](https://docs.docker.com/engine/api/v1.26/)  
+[docker-api for ruby](https://github.com/swipely/docker-api)  
+
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+require 'docker-jail'
+rsecoundequire 'pp'
 
-## Development
+image      = 'ruby:alpine'
+user       = 'nobody:nobody'
+pids_limit = 10
+cpus       = '0' # string
+memory_mb  = 100 # 100MB
+timeout    = 10  # 10 seconds
+input      = StringIO.new('10')
+tmpfs      = {'/tmp/a': 'rw,size=65536k'}
 
-After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+cmd_list = ['ruby', '-e', 'puts(gets().to_i*2)']
+# cmd_list = ['bash', '-c', 'time df']
+cmd_list = ['sh', '-c', 'time timeout -s SIGKILL -t 2 ruby -e "puts(\"output\");exit(22)"']
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+opts = {cmd_list: cmd_list, image: image, user: user, workdir: '/tmp',
+        cpus: cpus, memory_mb: memory_mb, pids_limit: pids_limit, tmpfs: tmpfs}
 
-## Contributing
+puts 'Create a container'
+jail = DockerJail::Simple.new(opts)
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/u10e10/docker-jail.
+puts 'Run with a time limit'
+jail.run_timeout(timeout, input) # {|s,c| puts "#{s}: #{c}"}
+
+puts "-------------------------"
+puts "Exit: #{jail.exit_code}"
+puts "Time over: #{jail.timeout?}"
+puts "Memory over: #{jail.oom_killed?}"
+
+print 'Stdout: '
+p jail.out
+print 'Stderr: '
+p jail.err
+print 'State: '
+pp jail.state
+
+# require 'pry'
+# binding.pry
+
+puts 'Delete force'
+jail.delete
+```
+
+
+## KnowHow
+
+
+### Share cpu resources equally 
+Use `cpus` options.  
+If your machine has Intel Hyper-Threading Technology,
+You can share equally by setting two core id to `cpus`.  
+e.g. `'0,1' `  
+
+##### Check core id.  
+
+```bash 
+cat /proc/cpuinfo | egrep 'process|core id' 
+```
+
+
+### Limit the time
+
+The docker-jail has two ways.  
+
+* First way: use `DockerJail::Base#run_timeout` method.  
+  This method can limit container execution time.  
+  But container execution time contains container up/down time.  
+
+* Second way: use `timeout` command in the container.  
+    But there may be cases where the container don't have the `timeout` command.  
+
+
+
+### Measure the time 
+
+Use `time` command in the container.  
+You can get result of the `time` command from stderr.  
 
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-
