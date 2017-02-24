@@ -4,13 +4,12 @@ module DockerJail
 
       break if 2.4 <= RUBY_VERSION.to_f
 
-      def compact!
-        delete_if{ |k, v| v.nil? }
+      def compact
+        reject{|k, v| v.nil? }
       end
 
-      def compact
-        h = self.dup
-        h.delete_if{ |k, v| v.nil? }
+      def compact!
+        delete_if{|k, v| v.nil? }
       end
     end
   end
