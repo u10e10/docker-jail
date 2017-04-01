@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Easy run commands in docker jail}
   spec.description   = spec.summary
-  spec.homepage      = 'https://github.com/u10e10/docker-jail'
+  spec.homepage      = 'https://github.com/uplus/docker-jail'
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 2.3.0'
 
