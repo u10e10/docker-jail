@@ -27,6 +27,7 @@ yard server --gems
 require 'docker-jail'
 rsecoundequire 'pp'
 
+# options
 image      = 'ruby:alpine'
 user       = 'nobody:nobody'
 pids_limit = 10
@@ -35,23 +36,23 @@ memory_mb  = 100 # 100MB
 timeout    = 10  # 10 seconds
 input      = StringIO.new('10')
 tmpfs      = {'/tmp/a': 'rw,size=65536k'}
-
-cmd_list = ['ruby', '-e', 'puts(gets().to_i*2)']
-# cmd_list = ['bash', '-c', 'time df']
-cmd_list = ['sh', '-c', 'time timeout -s SIGKILL -t 2 ruby -e "puts(\"output\");exit(22)"']
+cmd_list   = ['ruby', '-e', 'puts(gets().to_i*2)']
 
 opts = {cmd_list: cmd_list, image: image, user: user, workdir: '/tmp',
         cpus: cpus, memory_mb: memory_mb, pids_limit: pids_limit, tmpfs: tmpfs}
 
+# Create jail
 puts 'Create a container'
 jail = DockerJail::Simple.new(opts)
 
+# Run with a time limit
 puts 'Run with a time limit'
 jail.run_timeout(timeout, input) # {|s,c| puts "#{s}: #{c}"}
 
+# Results
 puts "-------------------------"
-puts "Exit: #{jail.exit_code}"
-puts "Time over: #{jail.timeout?}"
+puts "Exit:        #{jail.exit_code}"
+puts "Time over:   #{jail.timeout?}"
 puts "Memory over: #{jail.oom_killed?}"
 
 print 'Stdout: '
@@ -59,11 +60,12 @@ p jail.out
 print 'Stderr: '
 p jail.err
 print 'State: '
-pp jail.state
+p jail.state
 
 # require 'pry'
 # binding.pry
 
+# Delete jail
 puts 'Delete force'
 jail.delete
 ```
